@@ -1,0 +1,17 @@
+{
+	"name": "kousuu-assist-tool_v2",
+	"scripts": {
+		"dev": "nuxt",
+		"build": "nuxt build",
+		"start": "nuxt start",
+		"generate": "nuxt generate"
+	},
+	"dependencies": {
+		"nuxt": "^1.4.2",
+		"vue-clipboard2": "^0.2.1",
+		"vue-ls": "^3.1.0"
+	},
+	"devDependencies": {
+		"@nuxtjs/vuetify": "^0.4.2"
+	}
+}
