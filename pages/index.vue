@@ -617,6 +617,7 @@
 
             for (var i = 0; i < categoryNum; i++) {
               var cidx = this.getCategoryIndex(categoryNames[i])
+              if (cidx === -1) continue
               var ptime = Math.floor(time / (categoryNum - i))
               summaries[cidx].time = summaries[cidx].time + ptime
               if (!summaries[cidx].detailSet.has(schedule.detail) && schedule.detail !== '') {
