@@ -347,9 +347,9 @@
         Vue.ls.set('schedules', this.schedules)
       },
       fixEndTime: function(event, index) {
-        if (index === this.schedules.length - 1) return
         this.saveSchedules()
-        this.schedules[index + 1].startTime = this.schedules[index].endTime
+        if (index !== this.schedules.length - 1)
+          this.schedules[index + 1].startTime = this.schedules[index].endTime
         Vue.ls.set('schedules', this.schedules)
       },
       saveSchedules: function() {
