@@ -255,7 +255,7 @@
   
   export default {
     data: () => ({
-      version: 'v2.1.0-SNAPSHOT',
+      version: 'v2.1.0',
       mainPager: 1,
       mainPagerVisible: null,
       kousuuTab: null,
