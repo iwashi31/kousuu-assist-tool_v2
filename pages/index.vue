@@ -39,7 +39,7 @@
               </v-layout>
               <v-layout>
                 <v-flex class="mx-2 xs2">
-                  <v-select v-model="scheduleInputs.category" :items="categoryNames" label="カテゴリ"></v-select>
+                  <v-select v-model="scheduleInputs.category" :items="categoryNamesWithMulti" label="カテゴリ"></v-select>
                 </v-flex>
                 <v-flex class="mx-2 xs3">
                   <v-text-field label="作業内容" v-model="scheduleInputs.detail" @keydown.enter="pushSchedule"></v-text-field>
@@ -63,7 +63,7 @@
                   <v-text-field label="終了時刻" v-model="schedule.endTime" @change="fixEndTime($event, index)"></v-text-field>
                 </v-flex>
                 <v-flex class="mx-2 xs2">
-                  <v-select v-model="schedule.category" :items="categoryNames" label="カテゴリ" @change="saveSchedules"></v-select>
+                  <v-select v-model="schedule.category" :items="categoryNamesWithMulti" label="カテゴリ" @change="saveSchedules"></v-select>
                 </v-flex>
                 <v-flex class="mx-2 xs2">
                   <v-text-field v-model="schedule.detail" label="作業内容" @change="saveSchedules"></v-text-field>
@@ -117,6 +117,7 @@
       <v-content v-show="mainPager===2" >
         <v-tabs v-model="settingTab">
           <v-tab>カテゴリ</v-tab>
+          <v-tab>複合カテゴリ</v-tab>
           <v-tab>始業/休憩時間</v-tab>
           <v-tab v-if="false">データ管理</v-tab>
           <v-tab-item>
@@ -151,6 +152,61 @@
                 <v-flex>
                   <v-btn color="info" fab small :disabled="index===0" @click="swapCategories($event, index - 1)"><v-icon>arrow_upward</v-icon></v-btn>
                   <v-btn color="info" fab small :disabled="index===categories.length - 1" @click="swapCategories($event, index)"><v-icon>arrow_downward</v-icon></v-btn>
+                  <v-btn color="info" @click="deleteCategory($event, index)">削除</v-btn>
+                </v-flex>
+              </v-layout>
+            </v-container>
+          </v-tab-item>
+          <v-tab-item>
+            <v-container>
+              <v-layout class="mb-2">
+                <h2>複合カテゴリ登録</h2>
+                <v-tooltip right>
+                  <v-icon slot="activator" class="ml-1" color="blue-grey">info</v-icon>
+                  <span>複合カテゴリを選択して工数を入力すると、<br>その子カテゴリにコストを按分して出力されます。</span>
+                </v-tooltip>
+              </v-layout>
+              <v-layout>
+                <v-flex class="mx-2 xs3">
+                  <v-text-field label="複合カテゴリ名" v-model="multiCategoryInputs.name" @keydown.enter="pushCategory"></v-text-field>
+                </v-flex>
+              </v-layout>
+              <v-layout>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="multiCategoryInputs.category1" :items="categoryNames" label="子カテゴリ1"></v-select>
+                </v-flex>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="multiCategoryInputs.category2" :items="categoryNames" label="子カテゴリ2"></v-select>
+                </v-flex>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="multiCategoryInputs.category3" :items="categoryNames" label="子カテゴリ3"></v-select>
+                </v-flex>
+                <v-flex>
+                  <v-btn color="info" @click="pushMultiCategory">登録</v-btn>
+                </v-flex>
+              </v-layout>
+            </v-container>
+            <v-divider class="mx-3"></v-divider>
+            <v-container>
+              <v-layout class="mb-2">
+                <h2>登録済みの複合カテゴリ</h2>
+              </v-layout>
+              <v-layout v-for="(category, index) in multiCategories" :key="index">
+                <v-flex class="mx-2 xs2">
+                  <v-text-field label="複合カテゴリ名" v-model="category.name" @change="changeMultiCategoryName($event, index)"></v-text-field>
+                </v-flex>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="category.category1" :items="categoryNames" label="子カテゴリ1" @change="changeMultiCategory($event, index)"></v-select>
+                </v-flex>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="category.category2" :items="categoryNames" label="子カテゴリ2" @change="changeMultiCategory($event, index)"></v-select>
+                </v-flex>
+                <v-flex class="mx-2 xs2">
+                  <v-select v-model="category.category3" :items="categoryNames" label="子カテゴリ3" @change="changeMultiCategory($event, index)"></v-select>
+                </v-flex>
+                <v-flex>
+                  <v-btn color="info" fab small :disabled="index===0" @click="swapMultiCategories($event, index - 1)"><v-icon>arrow_upward</v-icon></v-btn>
+                  <v-btn color="info" fab small :disabled="index===categories.length - 1" @click="swapMultiCategories($event, index)"><v-icon>arrow_downward</v-icon></v-btn>
                   <v-btn color="info" @click="deleteCategory($event, index)">削除</v-btn>
                 </v-flex>
               </v-layout>
@@ -199,7 +255,7 @@
   
   export default {
     data: () => ({
-      version: 'v2.0.0',
+      version: 'v2.1.0',
       mainPager: 1,
       mainPagerVisible: null,
       kousuuTab: null,
@@ -213,6 +269,12 @@
         code: null,
         name: null
       },
+      multiCategoryInputs: {
+        name: null,
+        category1: null,
+        category2: null,
+        category3: null
+      },
       rest: {
         startTime: '12:00',
         endTime: '13:00'
@@ -221,6 +283,14 @@
         //{
         //  code: null,
         //  name: null
+        //}
+      ],
+      multiCategories: [
+        //{
+        //  name: null,
+        //  category1: null,
+        //  category2: null,
+        //  category3: null
         //}
       ],
       schedules: [
@@ -277,9 +347,9 @@
         Vue.ls.set('schedules', this.schedules)
       },
       fixEndTime: function(event, index) {
-        if (index === this.schedules.length - 1) return
         this.saveSchedules()
-        this.schedules[index + 1].startTime = this.schedules[index].endTime
+        if (index !== this.schedules.length - 1)
+          this.schedules[index + 1].startTime = this.schedules[index].endTime
         Vue.ls.set('schedules', this.schedules)
       },
       saveSchedules: function() {
@@ -301,11 +371,44 @@
 
         this.categoryInputs.name = ''
       },
+      pushMultiCategory: function() {
+        if (!this.multiCategoryInputs.name) return
+        if (!this.multiCategoryInputs.category1) {
+          if (this.multiCategoryInputs.category2) {
+            this.multiCategoryInputs.category1 = this.multiCategoryInputs.category2
+            this.multiCategoryInputs.category2 = null
+          }
+          else if (this.multiCategoryInputs.category3) {
+            this.multiCategoryInputs.category1 = this.multiCategoryInputs.category3
+            this.multiCategoryInputs.category3 = null
+          }
+        }
+        if (!this.multiCategoryInputs.category2) {
+          if (this.multiCategoryInputs.category3) {
+            this.multiCategoryInputs.category2 = this.multiCategoryInputs.category3
+            this.multiCategoryInputs.category3 = null
+          }
+        }
+        if (!this.multiCategoryInputs.category1) return
+        this.multiCategories.push(Object.assign({}, this.multiCategoryInputs))
+        Vue.ls.set('multiCategories', this.multiCategories)
+
+        this.multiCategoryInputs.name = ''
+        this.multiCategoryInputs.category1 = ''
+        this.multiCategoryInputs.category2 = ''
+        this.multiCategoryInputs.category3 = ''
+      },
       swapCategories: function(event, index) {
         var tmp = Object.assign({}, this.categories[index])
         this.categories.splice(index, 1)
         this.categories.splice(index + 1, 0, tmp)
         Vue.ls.set('categories', this.categories)
+      },
+      swapMultiCategories: function(event, index) {
+        var tmp = Object.assign({}, this.multiCategories[index])
+        this.multiCategories.splice(index, 1)
+        this.multiCategories.splice(index + 1, 0, tmp)
+        Vue.ls.set('multiCategories', this.multiCategories)
       },
       deleteCategory: function(event, index) {
         this.categories.splice(index, 1)
@@ -328,7 +431,48 @@
             this.schedules[idx].category = categoryName
           }
         }
+        for (var idx in this.multiCategories) {
+          if (this.multiCategories[idx].category1 === oldCategoryName)
+            this.multiCategories[idx].category1 = categoryName
+          if (this.multiCategories[idx].category2 === oldCategoryName)
+            this.multiCategories[idx].category2 = categoryName
+          if (this.multiCategories[idx].category3 === oldCategoryName)
+            this.multiCategories[idx].category3 = categoryName
+        }
         Vue.ls.set('categories', this.categories)
+      },
+      changeMultiCategoryName: function(event, index) {
+        var categoryName = this.multiCategories[index].name
+
+        if (categoryName === '') {
+          this.multiCategories[index].name = Vue.ls.get('multiCategories', [])[index].name
+          return
+        }
+
+        var oldCategoryName = Vue.ls.get('multiCategories', [])[index].name
+        for (var idx in this.schedules) {
+          if (this.schedules[idx].category === oldCategoryName) {
+            this.schedules[idx].category = categoryName
+          }
+        }
+        Vue.ls.set('multiCategories', this.multiCategories)
+      },
+      changeMultiCategory: function(event, index) {
+        var category1 = this.multiCategories[index].category1
+        var category2 = this.multiCategories[index].category2
+        var category3 = this.multiCategories[index].category3
+
+        var oldCategories = Vue.ls.get('multiCategories', [])
+        var oldCategory1 = oldCategories.category1
+        var oldCategory2 = oldCategories.category2
+        var oldCategory3 = oldCategories.category3
+        if (!category1 && !category2 && !category3) {
+          this.multiCategories[index].category1 = oldCategory1
+          this.multiCategories[index].category2 = oldCategory2
+          this.multiCategories[index].category3 = oldCategory3
+        }
+
+        Vue.ls.set('multiCategories', this.multiCategories)
       },
       getTimeCount: function(time) {
         var times = time.split(':');
@@ -382,6 +526,12 @@
         }
         return -1
       },
+      getMultiCategoryIndex: function(name) {
+        for (var i in this.multiCategories) {
+          if (name === this.multiCategories[i].name) return i
+        }
+        return -1
+      },
       getAliveTime: function(minute) {
         var hour = Math.floor(minute / 60)
         minute -= hour * 60
@@ -419,6 +569,16 @@
         }
         return arr;
       },
+      categoryNamesWithMulti: function() {
+        var arr = []
+        for (var category of this.categories) {
+          arr.push(category.name)
+        }
+        for (var category of this.multiCategories) {
+          arr.push(category.name)
+        }
+        return arr;
+      },
       summaries: function() {
         var summaries = []
         for (var category of this.categories) {
@@ -432,10 +592,39 @@
 
         for (var schedule of this.schedules) {
           var idx = this.getCategoryIndex(schedule.category)
-          if (idx === -1) continue
-          summaries[idx].time = summaries[idx].time + this.getTimeRange(schedule.startTime, schedule.endTime)
-          if (!summaries[idx].detailSet.has(schedule.detail) && schedule.detail !== '') {
-            summaries[idx].detailSet.add(schedule.detail)
+          if (idx !== -1) {
+            summaries[idx].time = summaries[idx].time + this.getTimeRange(schedule.startTime, schedule.endTime)
+            if (!summaries[idx].detailSet.has(schedule.detail) && schedule.detail !== '') {
+              summaries[idx].detailSet.add(schedule.detail)
+            }
+          } else {
+            idx = this.getMultiCategoryIndex(schedule.category)
+            if (idx === -1) continue
+
+            var multiCategory = this.multiCategories[idx]
+            var categoryNum;
+            if (!multiCategory.category2) categoryNum = 1
+            else if (!multiCategory.category3) categoryNum = 2
+            else categoryNum = 3
+
+            var categoryNames = [
+              multiCategory.category1,
+              multiCategory.category2,
+              multiCategory.category3
+            ]
+
+            var time = this.getTimeRange(schedule.startTime, schedule.endTime)
+
+            for (var i = 0; i < categoryNum; i++) {
+              var cidx = this.getCategoryIndex(categoryNames[i])
+              if (cidx === -1) continue
+              var ptime = Math.floor(time / (categoryNum - i))
+              summaries[cidx].time = summaries[cidx].time + ptime
+              if (!summaries[cidx].detailSet.has(schedule.detail) && schedule.detail !== '') {
+                summaries[cidx].detailSet.add(schedule.detail)
+              }
+              time = time - ptime
+            }
           }
         }
 
@@ -458,11 +647,13 @@
           name: 'カテゴリ3',
         }
       ])
+      this.multiCategories = Vue.ls.get('multiCategories', [])
       this.rest = Vue.ls.get('rest', {startTime: '12:00', endTime: '13:00'})
       this.jobStartTime = Vue.ls.get('jobStartTime', '9:00')
 
       Vue.ls.set('schedules', this.schedules)
       Vue.ls.set('categories', this.categories)
+      Vue.ls.set('multiCategories', this.multiCategories)
       Vue.ls.set('rest', this.rest)
       Vue.ls.set('jobStartTime', this.jobStartTime)
     }
