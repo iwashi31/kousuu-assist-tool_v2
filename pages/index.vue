@@ -245,7 +245,7 @@
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
   import Vue from 'vue'
   import Storage from 'vue-ls'
   import VueClipboard from 'vue-clipboard2'
@@ -563,14 +563,14 @@
     },
     computed: {
       categoryNames: function() {
-        var arr = []
+        const arr: string[] = []
         for (var category of this.categories) {
           arr.push(category.name)
         }
         return arr;
       },
       categoryNamesWithMulti: function() {
-        var arr = []
+        const arr: string[] = []
         for (var category of this.categories) {
           arr.push(category.name)
         }
@@ -580,7 +580,12 @@
         return arr;
       },
       summaries: function() {
-        var summaries = []
+        const summaries: {
+            code: string;
+            category: string;
+            time: number;
+            detailSet: Set<any>;
+        }[] = []
         for (var category of this.categories) {
           summaries.push({
             code: category.code,
