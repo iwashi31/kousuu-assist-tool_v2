@@ -9,7 +9,8 @@
 	"dependencies": {
 		"nuxt": "^2.2.0",
 		"vue-clipboard2": "^0.2.1",
-		"vue-ls": "^3.1.0"
+		"vue-ls": "^3.1.0",
+		"vue-meta": "^1.5.5"
 	},
 	"devDependencies": {
 		"@nuxtjs/vuetify": "^0.4.2",
