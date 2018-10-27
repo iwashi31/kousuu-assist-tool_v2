@@ -13,7 +13,8 @@ module.exports = {
 		]
 	},
 	modules: [
-		'@nuxtjs/vuetify'
+		'@nuxtjs/vuetify',
+		"~/modules/typescript.js"
 	],
 	vuetify: {
 	}
